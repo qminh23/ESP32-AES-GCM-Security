@@ -1,0 +1,57 @@
+/* Controls and live readings share the first screen. */
+.brand { margin-bottom: 28px; }
+.page-head { margin-bottom: 16px; }
+.mode-note { margin-bottom: 18px; padding: 8px 12px; }
+.control-overview {
+  display: grid;
+  grid-template-columns: minmax(235px, .85fr) minmax(0, 2fr);
+  gap: 18px;
+  align-items: stretch;
+}
+.control-card { min-width: 0; padding: 22px; }
+.control-card h2 { margin-top: 22px; font-size: 21px; }
+.control-card .device-status { font-size: 12px; text-align: right; }
+.control-card .device-bottom { gap: 16px; padding-top: 26px; }
+.control-card .toggle { min-width: 43px; }
+.control-card #doorLast { margin-top: 12px; }
+.device-connection {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+.live-measurements { min-width: 0; }
+.live-measurements .metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.live-measurements .metric { padding: 14px; }
+.live-measurements .metric-label { font-size: 13px; }
+.live-measurements .metric-value { margin: 6px 0 0; font-size: 25px; }
+.live-measurements .metric-foot { font-size: 12px; }
+.live-measurements .metric.e2e { grid-column: 1 / -1; }
+.live-measurements .hardware-note { margin-top: 8px; font-size: 12px; }
+.measurement-info { padding: 14px 18px; background: #fff; border: 1px solid var(--line); border-radius: 12px; }
+.measurement-info p { font-size: 13px; color: var(--muted); margin-top: 10px; }
+.cycle-toolbar .fineprint { margin-top: 0; }
+@media (max-width: 1050px) {
+  .control-overview { grid-template-columns: 235px minmax(0, 1fr); gap: 14px; }
+  .live-measurements .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 800px) {
+  .control-overview { grid-template-columns: 1fr; }
+  .control-card { min-height: 0; }
+  .control-card .device-bottom { padding-top: 16px; margin-top: 0; }
+  .control-card h2 { margin-top: 12px; }
+  .device-connection { margin-top: 12px; padding-top: 10px; }
+}
+@media (max-width: 480px) {
+  .live-measurements .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .live-measurements .metric-value { font-size: 23px; }
+  .live-measurements .metric-label .icon { display: none; }
+}
+.brand { padding: 0; gap: 10px; }
+.brand-mark { width: 35px; height: 35px; flex-shrink: 0; border-radius: 10px; }
+.brand strong { font-size: 16px; white-space: nowrap; }
+.brand .eyebrow { font-size: 10px; letter-spacing: .4px; white-space: nowrap; }

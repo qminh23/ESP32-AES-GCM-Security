@@ -1,0 +1,103 @@
+"""Versioned per-command memory samples; never infer measurements from telemetry."""
+import csv
+import io
+import json
+from datetime import datetime
+from flask import Response, jsonify, request
+
+FIELDS = ("heap_before", "heap_after", "heap_peak", "heap_retained", "allocations",
+          "stack_free_min", "context_bytes", "stack_peak")
+V1_FIELDS = FIELDS[:-1]
+STACK_STATES = {0: "unavailable", 1: "measured", 2: "untouched", 3: "saturated"}
+
+
+def parse_memory(data, encrypted):
+    sample = data.get("memory")
+    if sample is None:
+        return {"status": "missing"}
+    if not isinstance(sample, dict):
+        return {"status": "invalid"}
+    version = sample.get("v")
+    # v1 has no per-command stack probe; keep it readable but less informative.
+    if (type(version) is not int or version not in (1, 2, 3)
+            or type(data.get("aes_enabled")) is not bool or data["aes_enabled"] != encrypted
+            or sample.get("valid") is not True):
+        return {"status": "invalid"}
+    fields = FIELDS if version in (2, 3) else V1_FIELDS
+    # A malformed/overflowed trace is unavailable, never a zero-byte sample.
+    if any(type(sample.get(k)) is not int or not 0 <= sample[k] <= 16 * 1024 * 1024 for k in fields):
+        return {"status": "invalid"}
+    if (sample["heap_retained"] > sample["heap_peak"]
+            or (sample["allocations"] == 0 and sample["heap_peak"] != 0)
+            or (encrypted and sample["context_bytes"] == 0)
+            or (not encrypted and sample["context_bytes"] != 0)
+            or (version == 2 and not 1 <= sample["stack_peak"] <= 64 * 1024)):
+        return {"status": "invalid"}
+    result = {"status": "valid", "v": version, **{k: sample[k] for k in fields}}
+    if version == 3:
+        state = sample.get("stack_status")
+        if type(state) is not int or state not in STACK_STATES:
+            return {"status": "invalid"}
+        if state == 1:
+            if not 1 <= sample["stack_peak"] <= 64 * 1024:
+                return {"status": "invalid"}
+        elif sample["stack_peak"] != 0:
+            return {"status": "invalid"}
+        else:
+            result.update(status="partial", stack_peak=None)
+        result["stack_status"] = STACK_STATES[state]
+    return result
+
+
+def register_memory_routes(app, dashboard, timezone):
+    def rows(limit):
+        day = request.args.get("date", datetime.now(timezone).strftime("%Y-%m-%d"))
+        records = dashboard.store.measurements(day, limit=limit)
+        result = []
+        for row in records:
+            if row["source"] != "command" or row["outcome"] != "applied" or row["command"] not in {"ON", "OFF"}:
+                continue
+            sample = json.loads(row["command_memory_json"]) if row["command_memory_json"] else {"status": "missing"}
+            result.append({k: row[k] for k in ("ts", "command_id", "command", "mode")} | sample)
+        return day, result
+
+    @app.get("/api/command-memory")
+    def command_memory():
+        try:
+            day, samples = rows(2000)
+        except ValueError as exc:
+            return jsonify(error=str(exc)), 400
+        groups = []
+        versions = sorted({s["v"] for s in samples if type(s.get("v")) is int}) or [3]
+        for version in versions:
+            for command in ("ON", "OFF"):
+                for mode in ("on", "off"):
+                    group = [s for s in samples if s["command"] == command and s["mode"] == mode
+                             and s.get("v") == version and s["status"] in {"valid", "partial"}]
+                    stack = [s["stack_peak"] for s in group if isinstance(s.get("stack_peak"), int)]
+                    groups.append(dict(command=command, mode=mode, v=version, n=len(group),
+                        peak_mean=sum(s["heap_peak"] for s in group)/len(group) if group else None,
+                        peak_max=max((s["heap_peak"] for s in group), default=None),
+                        retained_mean=sum(s["heap_retained"] for s in group)/len(group) if group else None,
+                        stack_n=len(stack),
+                        stack_mean=sum(stack)/len(stack) if stack else None,
+                        stack_max=max(stack) if stack else None,
+                        stack_unavailable=len(group)-len(stack)))
+        return jsonify(date=day, groups=groups, latest=samples[0] if samples else None,
+                       samples=samples[:30], valid=sum(s["status"] in {"valid", "partial"} for s in samples),
+                       unavailable=sum(s["status"] not in {"valid", "partial"} for s in samples),
+                       legacy=sum(s.get("v") == 1 for s in samples),
+                       partial=sum(s["status"] == "partial" for s in samples), limit=2000)
+
+    @app.get("/api/command-memory.csv")
+    def command_memory_csv():
+        try:
+            day, samples = rows(100000)
+        except ValueError as exc:
+            return jsonify(error=str(exc)), 400
+        buffer = io.StringIO()
+        writer = csv.DictWriter(buffer, fieldnames=("ts", "command_id", "command", "mode", "status", "v", *FIELDS, "stack_status"))
+        writer.writeheader()
+        writer.writerows(reversed(samples))
+        return Response("\ufeff" + buffer.getvalue(), mimetype="text/csv; charset=utf-8",
+                        headers={"Content-Disposition": f'attachment; filename="command_memory_{day}.csv"'})

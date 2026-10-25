@@ -1,0 +1,6 @@
+#pragma once
+
+/* Copy to mqtt_config.local.h; the local file is excluded from Git. */
+#define MQTT_BROKER_URI "mqtts://mqtt.example.com:8883"
+#define MQTT_USERNAME "YOUR_MQTT_USER"
+#define MQTT_PASSWORD "YOUR_MQTT_PASSWORD"
