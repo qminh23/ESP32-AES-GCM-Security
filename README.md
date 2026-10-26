@@ -1,6 +1,6 @@
 # Hệ thống IoT ESP32 sử dụng AES-128-GCM
 
-Hệ thống điều khiển khóa điện tử qua MQTT/TLS, dùng **AES-128-GCM** bảo vệ payload và so sánh thời gian, bộ nhớ, năng lượng ESP32 khi bật/tắt AES.
+Hệ thống điều khiển khóa điện tử qua MQTT/TLS, dùng **AES-128-GCM** bảo vệ payload và so sánh thời gian, công suất, năng lượng ESP32 khi bật/tắt AES.
 
 Dự án gồm firmware ESP-IDF, dashboard Flask, cảm biến INA219 và công cụ sinh payload cho MQTT.fx; phục vụ học tập và thực nghiệm.
 
@@ -42,7 +42,7 @@ Dự án gồm firmware ESP-IDF, dashboard Flask, cảm biến INA219 và công 
 - Đổi AES tại runtime có xác nhận; yêu cầu đổi chế độ luôn dùng AES-GCM và challenge.
 - Xem nonce, tag, AAD, ciphertext; thử sửa dữ liệu, replay và payload quá dài.
 - Hiển thị V/I/P từ INA219, thời gian mã hóa/giải mã, xử lý GPIO và độ trễ đầu-cuối.
-- Lưu lịch sử, số đo vào SQLite; lọc, xuất CSV và so sánh bộ nhớ, năng lượng giữa hai chế độ.
+- Lưu lịch sử, số đo vào SQLite; lọc, xuất CSV và so sánh thời gian, năng lượng giữa hai chế độ.
 - Dùng `--offline` để xem giao diện mà không kết nối broker hoặc phát lệnh.
 
 ## Kiến trúc hệ thống
@@ -102,16 +102,14 @@ Nếu thay relay hoặc đấu COM–NO/COM–NC khác, kiểm tra `DOOR_UNLOCK_
 │   ├── hardware_control.[ch]     # Hàng đợi, GPIO relay
 │   ├── ina219_app.[ch]           # Driver, chẩn đoán INA219
 │   ├── cycle_energy.[ch]         # Đo, tích phân năng lượng
-│   ├── command_memory.[ch]       # Heap hooks, dò stack
 │   ├── web_server.py             # Dashboard, SQLite, API
 │   ├── cycle_energy_web.py       # Điều phối đo năng lượng
-│   ├── command_memory_web.py     # Phân tích bộ nhớ, CSV
 │   ├── perf_measure.py           # Đo batch với thiết bị thật
 │   ├── *_panel.html, static/     # Giao diện, font và giấy phép
 │   ├── emqxsl-ca.crt             # CA công khai cho TLS
 │   └── *.local.h.example         # Mẫu Wi-Fi/MQTT
 ├── tests/                        # Mã kiểm thử Python mô phỏng
-├── docs/                         # Phạm vi đo, rà soát, ghi chú v3
+├── docs/                         # Hướng dẫn tổ chức phép đo năng lượng
 └── .devcontainer/                # Môi trường ESP-IDF tham khảo
 ```
 
@@ -186,7 +184,7 @@ Thay `<PORT>` bằng cổng thật: `/dev/cu.usbserial-10` (macOS), `/dev/ttyUSB
 
 `sdkconfig.perf` đã chọn `esp32`; bản sao sạch không cần `set-target`.
 
-Cấu hình đo: CPU **240 MHz**, compiler **PERF**, log **WARN**, heap hooks và hardware AES bật, MQTT poll **10 ms**, Wi-Fi `WIFI_PS_NONE`. Giữ `-DSDKCONFIG=sdkconfig.perf`; so sánh hai chế độ trên cùng firmware, cấu hình, nguồn và tải.
+Cấu hình đo: CPU **240 MHz**, compiler **PERF**, log **WARN**, hardware AES bật, MQTT poll **10 ms**, Wi-Fi `WIFI_PS_NONE`. Giữ `-DSDKCONFIG=sdkconfig.perf`; so sánh hai chế độ trên cùng firmware, cấu hình, nguồn và tải.
 
 Đo lại cả hai chế độ sau khi thay firmware hoặc thiết lập đối chứng.
 
@@ -208,7 +206,7 @@ DASHBOARD_DB=/tmp/esp32-preview.sqlite3 python main/web_server.py --offline --po
 2. Chờ dashboard nhận trạng thái/chế độ AES từ ESP32.
 3. Gửi ON/OFF; chờ ACK trước lệnh tiếp theo.
 4. Khi đổi AES, chờ xác nhận rồi mới gửi theo chế độ mới; không cần flash lại.
-5. Xem lịch sử, thông số, bộ nhớ/năng lượng và xuất CSV.
+5. Xem lịch sử, thông số thời gian, năng lượng và xuất CSV.
 
 Server mặc định chỉ nghe localhost; `--host` đổi địa chỉ. Dashboard chưa có đăng nhập/phân quyền, cần bổ sung trước khi triển khai ngoài lab. Khởi động lại server sau khi sửa Python/template.
 
@@ -220,7 +218,7 @@ Server mặc định chỉ nghe localhost; `--host` đổi địa chỉ. Dashboa
 | --- | --- | --- |
 | `device/esp32/control` | Python/client → ESP32 | ON/OFF thuần hoặc AES |
 | `device/esp32/status` | ESP32 → Python | Trạng thái, ACK, lỗi, chế độ/challenge |
-| `device/esp32/telemetry` | ESP32 → Python | V/I/P, heap, chẩn đoán |
+| `device/esp32/telemetry` | ESP32 → Python | V/I/P, trạng thái và chẩn đoán cảm biến |
 | `device/esp32/config/aes` | Python → ESP32 | `GET` hoặc đổi AES có xác thực |
 | `device/esp32/cycle-energy/request` | Python → ESP32 | START/ABORT có xác thực |
 | `device/esp32/cycle-energy/result` | ESP32 → Python | Kết quả đợt đo |
@@ -302,14 +300,6 @@ E2E dùng `perf_counter_ns()` trên cùng máy Python, không cần đồng bộ
 
 Thống kê N/min/mean/P95/max theo số mẫu hợp lệ từng chỉ số; dữ liệu cũ thiếu trường để trống. Chỉ đo ON/OFF, chưa benchmark nhiều kích thước payload.
 
-### Bộ nhớ từng lệnh
-
-Firmware phát giao thức **v3**, parser đọc cả v1/v2. Heap hooks theo dõi cấp phát mới trong task xử lý; stack tô/quét dấu vết dưới SP, tối đa 2.048 byte. Không cộng lại context GCM đã nằm trong stack.
-
-Stack chưa xác định thì để trống và đánh dấu `partial`; các trạng thái gồm `unavailable`, `measured`, `untouched`, `saturated`. Heap đỉnh 0 có thể hợp lệ, không đại diện toàn RAM. So sánh cùng firmware/giao thức/phạm vi và hiệu chuẩn vùng dò stack trước khi kết luận RAM tăng do AES. Xem [phạm vi bộ nhớ](docs/command-memory.md), [ghi chú v3](docs/measurement-notes-v3.md).
-
-`partial` vẫn có thể chứa số đo heap hợp lệ. Không ghép tùy tiện dữ liệu từ các phiên bản giao thức hoặc firmware khác nhau.
-
 ### Năng lượng chu kỳ ON/OFF
 
 Trang năng lượng chạy **1–100 chu kỳ/đợt**, **1–5 cặp** AES bật/tắt, đảo thứ tự giữa các cặp. Mỗi chu kỳ gồm ON và OFF có ACK; mở web không tự đo.
@@ -333,7 +323,7 @@ Chỉ tính `E/N` theo chu kỳ, `E/(2N)` theo lệnh khi:
 SQLite tự tạo tại `main/iot_history.sqlite3`:
 
 - `events`: lịch sử lệnh, phản hồi, sự kiện.
-- `measurements`: số đo, mã lệnh, chế độ, kết quả, JSON bộ nhớ.
+- `measurements`: số đo thời gian, điện áp/dòng điện/công suất, mã lệnh, chế độ và kết quả.
 - `cycle_sessions`, `cycle_blocks`, `cycle_commands`: phiên, đợt, lệnh năng lượng.
 
 Không xóa SQLite hoặc `-wal`/`-shm` khi ứng dụng chạy. Lưu minh chứng bằng bản sao nhất quán hoặc CSV.
@@ -345,7 +335,6 @@ Không xóa SQLite hoặc `-wal`/`-shm` khi ứng dụng chạy. Lưu minh chứ
 | `GET /api/state` | MQTT, thiết bị, chế độ, số đo mới nhất |
 | `GET /api/history`, `/api/history.csv` | Lịch sử theo `date=YYYY-MM-DD` |
 | `GET /api/performance`, `/api/performance.csv` | Số đo theo ngày, `mode=all/on/off` |
-| `GET /api/command-memory`, `/api/command-memory.csv` | Thống kê/CSV bộ nhớ |
 | `POST /api/control` | Gửi lệnh/kịch bản |
 | `POST /api/mode` | Đổi AES có xác nhận |
 | `GET /api/cycle-energy` | Trạng thái/kết quả năng lượng |
@@ -361,7 +350,7 @@ POST cần `X-CSRF-Token` của phiên, giao diện tự gửi; token không tha
 python -m unittest discover -s tests -v
 ```
 
-Kiểm thử mô phỏng ACK, thời gian/E2E, telemetry lỗi, parser bộ nhớ, chất lượng và điều phối năng lượng; không cần broker/ESP32. Build firmware và thử đấu dây/relay/chốt trên thiết bị là bước riêng.
+Kiểm thử mô phỏng ACK, thời gian/E2E, telemetry lỗi, cấu hình cục bộ, tương thích database cũ, chất lượng và điều phối năng lượng; không cần broker/ESP32. Build firmware và thử đấu dây/relay/chốt trên thiết bị là bước riêng.
 
 Công cụ batch:
 
@@ -387,7 +376,6 @@ Kiểm thử mô phỏng không xác nhận đấu dây hoặc chuyển động 
 | `REPLAY_REJECT` | Gói quá ±10 giây hoặc lệch giờ Python |
 | INA219 thiếu dữ liệu | Nguồn, SDA25/SCL26, `0x40`, R100; xem `sensor_stage`, `sensor_error_name`, `bus_raw`, `shunt_raw` |
 | Năng lượng lỗi | Nguồn qua INA219, USB đi vòng, số lệnh/mẫu, thời lượng, max gap |
-| Stack trống | Xem `stack_status`; không đổi `partial`/`untouched` thành 0 |
 | Giao diện cũ | Khởi động lại Flask đúng thư mục, tải lại trang |
 
 Sensor lỗi hiển thị null/“—”, không dùng số cũ hoặc 0. Log WARN ẩn thông báo INFO; giữ cùng mức log khi so sánh.
@@ -398,7 +386,14 @@ Sensor lỗi hiển thị null/“—”, không dùng số cũ hoặc 0. Log WA
 - Khóa thử nghiệm trong nguồn; cần cấp phát, luân chuyển và lưu khóa phần cứng.
 - ACK/status/telemetry dựa vào TLS và quyền broker, chưa có AES-GCM riêng.
 - Cần đăng nhập, phân quyền và cảm biến xác nhận chốt.
-- INA219 phụ thuộc shunt 0,1 Ω, đấu nguồn và hiệu chuẩn; dò stack có phạm vi hữu hạn.
+- INA219 phụ thuộc shunt 0,1 Ω, đấu nguồn và hiệu chuẩn.
+- Chưa đánh giá định lượng chi phí bộ nhớ của AES-GCM; cần xây dựng và kiểm chứng phép đo heap/stack trong điều kiện tương đương giữa hai chế độ.
 - Chênh E2E gồm mạng; chênh năng lượng phản ánh AES tích hợp và độ dài payload, chưa tách riêng thuật toán.
 
-Tham khảo: [bộ nhớ](docs/command-memory.md), [độ trễ](docs/latency-audit-2026-10-20.md), [phương pháp đo](docs/measurement-review-2026-10-21.md). Tài liệu có ngày phản ánh thời điểm ghi nhận; ưu tiên mã nguồn hiện tại và giao thức v3.
+Tham khảo: [kế hoạch đo năng lượng](docs/measurement-notes-v3.md).
+
+## Quản lý tệp trong Git
+
+Repository chứa mã nguồn, giao diện, kiểm thử, cấu hình mẫu và tài liệu sử dụng. Các thư mục `build/`, `build-*/`, `output/`, `tmp/`, cache, database đo và cấu hình riêng đã được loại khỏi Git bằng `.gitignore`.
+
+Giữ `.env.local`, `main/wifi_credentials.local.h` và `main/mqtt_config.local.h` trên máy để vận hành; chỉ đưa các file `.example` lên GitHub. Sau khi xoá build, chạy lại lệnh biên dịch để tạo firmware và dữ liệu hỗ trợ trình soạn thảo.

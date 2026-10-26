@@ -14,7 +14,6 @@
 #include "mbedtls/gcm.h"
 #include "crypto_app.h"
 #include "mqtt_app.h"
-#include "command_memory.h"
 
 static const char *TAG = "CRYPTO_APP";
 
@@ -154,7 +153,8 @@ void test_crypto_engine(void) {
 }
 /* Giữ ON/OFF cũ; mở rộng ON:<16HEX> / OFF:<16HEX> để đối chiếu ACK và thời gian thực thi.
  * Với AES ON, id nằm bên trong ciphertext và được Tag xác thực cùng lệnh. */
-static void apply_control_text(const unsigned char *text, size_t len, int64_t decrypt_us, int64_t received_us) {
+static void apply_control_text(const unsigned char *text, size_t len, int64_t decrypt_us,
+                               int64_t received_us, bool aes_enabled) {
     size_t command_len; int state;
     if (len >= 2 && memcmp(text, "ON", 2) == 0) { command_len = 2; state = 1; }
     else if (len >= 3 && memcmp(text, "OFF", 3) == 0) { command_len = 3; state = 0; }
@@ -172,15 +172,14 @@ static void apply_control_text(const unsigned char *text, size_t len, int64_t de
         id[i] = (char)c;
     }
     id[16] = 0;
-    command_memory_t memory = command_memory_end();
-    hardware_set_state_tracked(state, id, decrypt_us, received_us, &memory);
+    hardware_set_state_tracked(state, id, decrypt_us, received_us, aes_enabled);
 }
 
 static void process_control_payload(const unsigned char *payload, size_t payload_len, int64_t received_us) {
     if (!payload) return;
     if (!crypto_is_aes_enabled()) {
         // Nhận ON/OFF MQTT.fx cũ, hoặc lệnh có id từ web đo thời gian thực thi.
-        apply_control_text(payload, payload_len, -1, received_us);
+        apply_control_text(payload, payload_len, -1, received_us, false);
         return;
     }
 
@@ -227,7 +226,7 @@ static void process_control_payload(const unsigned char *payload, size_t payload
     }
     ESP_LOGI(TAG, "[BAO MAT] Lenh hop le: %.*s", (int)ct_len, decrypted);
     ESP_LOGI(TAG, "[HIEU NANG] Giai ma AES-128-GCM: %" PRId64 " us", elapsed);
-    apply_control_text(decrypted, ct_len, elapsed, received_us);
+    apply_control_text(decrypted, ct_len, elapsed, received_us, true);
     /* Lệnh có ID mang decrypt_us trong ACK; không gửi telemetry trước GPIO. */
     if (ct_len == 2 || ct_len == 3) mqtt_app_publish_decrypt_time(elapsed);
 cleanup:
@@ -235,11 +234,7 @@ cleanup:
 }
 
 void process_mqtt_payload(const unsigned char *payload, size_t payload_len, int64_t received_us) {
-    bool aes = crypto_is_aes_enabled();
-    command_memory_begin(aes, aes ? sizeof(mbedtls_gcm_context) : 0);
     process_control_payload(payload, payload_len, received_us);
-    /* Đóng bộ đo cả khi lệnh lỗi hoặc không có ID. */
-    command_memory_end();
 }
 
 /* Đổi AES cần Tag hợp lệ và challenge mới, kể cả khi control ở plaintext. */

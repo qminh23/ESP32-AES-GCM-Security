@@ -17,7 +17,7 @@ class SensorTelemetryTests(unittest.TestCase):
         self.d.store.close()
 
     def ingest(self, **fields):
-        payload = dict(aes_enabled=True, relay_on=True, heap_free_bytes=170000, **fields)
+        payload = dict(aes_enabled=True, relay_on=True, **fields)
         self.d.ingest(TELEMETRY_TOPIC, json.dumps(payload).encode())
         return self.client.get("/api/state").get_json()
 

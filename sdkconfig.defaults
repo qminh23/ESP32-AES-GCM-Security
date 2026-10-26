@@ -10,7 +10,7 @@ CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ=240
 # outgoing messages. Keep transport scheduling identical in both AES modes.
 CONFIG_MQTT_USE_CUSTOM_CONFIG=y
 CONFIG_MQTT_POLL_READ_TIMEOUT_MS=10
-CONFIG_HEAP_USE_HOOKS=y
+# CONFIG_HEAP_USE_HOOKS is not set
 
 # Per-command logging must not sit inside the measured window.
 CONFIG_LOG_DEFAULT_LEVEL_WARN=y

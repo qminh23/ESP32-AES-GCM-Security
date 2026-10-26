@@ -39,9 +39,8 @@ STATUS_TOPIC = "device/esp32/status"
 TELEMETRY_TOPIC = "device/esp32/telemetry"
 MODE_TOPIC = "device/esp32/config/aes"
 from cycle_energy_web import CycleEnergy, RESULT as CYCLE_RESULT
-from command_memory_web import parse_memory, register_memory_routes
 
-METRICS = {"voltage_v", "current_ma", "power_w", "heap_free_bytes", "decrypt_us"}
+METRICS = {"voltage_v", "current_ma", "power_w", "decrypt_us"}
 
 
 def encrypt_payload(command_str, key=AES_KEY, aad_suffix=b"", *, timings=None):
@@ -91,15 +90,13 @@ class Store:
                 id INTEGER PRIMARY KEY, ts REAL NOT NULL, mode TEXT NOT NULL,
                 source TEXT NOT NULL, command_id TEXT UNIQUE, command TEXT, scenario TEXT,
                 outcome TEXT NOT NULL, payload_bytes INTEGER,
-                voltage_v REAL, current_ma REAL, power_w REAL, heap_free_bytes REAL,
+                voltage_v REAL, current_ma REAL, power_w REAL,
                 encrypt_us REAL, decrypt_us REAL, rtt_ms REAL)""")
             columns = {row["name"] for row in self.db.execute("PRAGMA table_info(measurements)")}
             if "execution_ms" not in columns:
                 self.db.execute("ALTER TABLE measurements ADD COLUMN execution_ms REAL")
             if "e2e_ms" not in columns:
                 self.db.execute("ALTER TABLE measurements ADD COLUMN e2e_ms REAL")
-            if "command_memory_json" not in columns:
-                self.db.execute("ALTER TABLE measurements ADD COLUMN command_memory_json TEXT")
             self.db.execute("CREATE INDEX IF NOT EXISTS measurements_ts ON measurements(ts)")
             self.db.execute("UPDATE measurements SET outcome='interrupted' WHERE outcome='pending'")
 
@@ -117,18 +114,17 @@ class Store:
 
     def record_measurement(self, row):
         columns = ("ts", "mode", "source", "command_id", "command", "scenario", "outcome",
-                   "payload_bytes", "voltage_v", "current_ma", "power_w", "heap_free_bytes",
+                   "payload_bytes", "voltage_v", "current_ma", "power_w",
                    "encrypt_us", "decrypt_us", "rtt_ms", "execution_ms", "e2e_ms")
         with self.lock, self.db:
             self.db.execute("INSERT INTO measurements("+",".join(columns)+") VALUES("+
                             ",".join("?" for _ in columns)+")", tuple(row.get(c) for c in columns))
 
-    def finish_measurement(self, command_id, outcome, decrypt_us=None, rtt_ms=None, execution_ms=None, e2e_ms=None, memory=None):
+    def finish_measurement(self, command_id, outcome, decrypt_us=None, rtt_ms=None, execution_ms=None, e2e_ms=None):
         with self.lock, self.db:
-            self.db.execute("UPDATE measurements SET outcome=?,decrypt_us=?,rtt_ms=?,execution_ms=?,e2e_ms=?,command_memory_json=? "
+            self.db.execute("UPDATE measurements SET outcome=?,decrypt_us=?,rtt_ms=?,execution_ms=?,e2e_ms=? "
                             "WHERE command_id=? AND outcome='pending'",
-                            (outcome, decrypt_us, rtt_ms, execution_ms, e2e_ms,
-                             json.dumps(memory) if memory is not None else None, command_id))
+                            (outcome, decrypt_us, rtt_ms, execution_ms, e2e_ms, command_id))
 
     def measurements(self, day, mode="all", limit=2000):
         if mode not in {"all", "on", "off"}:
@@ -290,7 +286,7 @@ class Dashboard:
                     recognized = True
                 value = data.get(field)
                 if type(value) in (int, float) and abs(value) <= 1e12 and math.isfinite(value):
-                    if field in {"voltage_v", "heap_free_bytes", "decrypt_us"} and value < 0:
+                    if field in {"voltage_v", "decrypt_us"} and value < 0:
                         continue
                     self.metrics[field] = {"value": value, "ts": now}
                     recognized = True
@@ -343,8 +339,8 @@ class Dashboard:
                 # Lưu số đo cảm biến tách biệt thời gian lệnh; lỗi cảm biến không thành số 0.
                 row = {"ts": now, "mode": "on" if self.aes_enabled else "off",
                        "source": "telemetry", "outcome": "valid" if self.sensor_ok is True else "sensor_error"}
-                for field in ("voltage_v", "current_ma", "power_w", "heap_free_bytes"):
-                    if field == "heap_free_bytes" or data.get("ina219_ok") is True:
+                for field in ("voltage_v", "current_ma", "power_w"):
+                    if data.get("ina219_ok") is True:
                         item = self.metrics.get(field)
                         if item and item["ts"] == now:
                             row[field] = item["value"]
@@ -368,7 +364,7 @@ class Dashboard:
         if not pending or data.get("command") != pending["command"]:
             return  # Không ghép telemetry, ACK lạ hoặc ACK lặp vào mẫu hiện tại.
         if "aes_enabled" in data and (type(data["aes_enabled"]) is not bool or data["aes_enabled"] != pending["encrypted"]):
-            return  # A different mode cannot complete this command or its memory sample.
+            return  # Không dùng ACK khác chế độ để hoàn tất lệnh.
         phase = data.get("phase")
         expected = "UNLOCKED" if pending["command"] == "ON" else "LOCKED"
         if phase == "applied" and data.get("status") == expected:
@@ -383,8 +379,7 @@ class Dashboard:
             e2e_start_ns = pending.get("e2e_start_ns")
             e2e_ms = ((received_ns - e2e_start_ns) / 1_000_000.0
                       if e2e_start_ns is not None and received_ns >= e2e_start_ns else None)
-            self.store.finish_measurement(command_id, "applied", decrypt_us, rtt_ms, execution_ms, e2e_ms,
-                                          parse_memory(data, pending["encrypted"]))
+            self.store.finish_measurement(command_id, "applied", decrypt_us, rtt_ms, execution_ms, e2e_ms)
             if self.end_to_end["command_id"] == command_id:
                 self.end_to_end.update(status="measured" if e2e_ms is not None else "missing",
                                        value_ms=e2e_ms, ts=now)
@@ -566,7 +561,6 @@ def create_app(db_path=None, connect=False):
     app.config["MAX_CONTENT_LENGTH"] = 4096
     dashboard = Dashboard(db_path or os.getenv("DASHBOARD_DB", str(BASE / "iot_history.sqlite3")))
     app.extensions["dashboard"] = dashboard
-    register_memory_routes(app, dashboard, VN)
     token = secrets.token_urlsafe(32)
 
     @app.before_request
@@ -682,7 +676,7 @@ def create_app(db_path=None, connect=False):
         except ValueError as exc:
             return jsonify(error=str(exc)), 400
         columns = ["ts", "mode", "source", "command_id", "command", "scenario", "outcome",
-                   "payload_bytes", "voltage_v", "current_ma", "power_w", "heap_free_bytes",
+                   "payload_bytes", "voltage_v", "current_ma", "power_w",
                    "encrypt_us", "decrypt_us", "rtt_ms", "execution_ms", "e2e_ms"]
         buffer = io.StringIO(); writer = csv.writer(buffer)
         writer.writerow(columns)
@@ -742,7 +736,7 @@ HTML_TEMPLATE = r'''
 @media(max-width:1100px){.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:520px){.metrics{grid-template-columns:1fr}.stats-controls{width:100%}}.metric.e2e{grid-column:1 / -1}
 </style>
-<link rel="stylesheet" href="/static/fonts.css"><link rel="stylesheet" href="/static/cycle_energy.css"><link rel="stylesheet" href="/static/typography.css"><link rel="stylesheet" href="/static/command_memory.css"><link rel="stylesheet" href="/static/dashboard.css"></head>
+<link rel="stylesheet" href="/static/fonts.css"><link rel="stylesheet" href="/static/cycle_energy.css"><link rel="stylesheet" href="/static/typography.css"><link rel="stylesheet" href="/static/dashboard.css"></head>
 <body>
 <svg class="symbols" aria-hidden="true"><defs>
 <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/></symbol>
@@ -793,11 +787,10 @@ HTML_TEMPLATE = r'''
    </div>
    <div class="panel"><div class="panel-head"><div class="segmented" role="tablist" aria-label="Lịch sử và số đo"><button class="active" id="historyTab" role="tab" aria-selected="true">Lịch sử hoạt động</button><button id="measureTab" role="tab" aria-selected="false">Thông số đo</button></div><a id="exportCsv" class="btn small" href="/api/history.csv"><svg class="icon"><use href="#i-download"/></svg>Xuất CSV</a></div>
     <div class="panel-body" id="historyPane"><div class="history-tools"><div class="date-control"><button id="prevDate" aria-label="Ngày trước">‹</button><input type="date" id="historyDate" aria-label="Ngày xem lịch sử"><button id="nextDate" aria-label="Ngày tiếp theo">›</button></div></div><ul class="history-list" id="historyList"><li class="empty">Chưa có sự kiện.</li></ul></div>
-    <div class="panel-body" id="measurePane" hidden><div class="data-grid"><div class="chart-box"><div class="metric-label">Điện áp gần đây · V<span>Telemetry thực</span></div><svg id="voltageChart" viewBox="0 0 400 145" role="img" aria-label="Đồ thị điện áp"><text x="200" y="80" text-anchor="middle" fill="#94a1b6" font-size="12">Chưa nhận dữ liệu INA219</text></svg></div><table class="data-table"><tbody><tr><td>Heap trống hệ thống · ESP32</td><td id="heapValue">—</td></tr><tr><td>Giải mã · ESP32</td><td id="decryptValue">—</td></tr><tr><td>Mã hóa · Python</td><td id="encryptValue">—</td></tr><tr><td>Xử lý lệnh · ESP32</td><td id="latencyValue">—</td></tr><tr><td>Độ trễ đầu-cuối · E2E</td><td id="e2eValue">—</td></tr><tr><td>Đóng gói AES · Python</td><td id="pythonValue">—</td></tr><tr><td>Chế độ AES · ESP32 báo</td><td id="firmwareMode">Chưa có dữ liệu</td></tr></tbody></table></div>
+    <div class="panel-body" id="measurePane" hidden><div class="data-grid"><div class="chart-box"><div class="metric-label">Điện áp gần đây · V<span>Telemetry thực</span></div><svg id="voltageChart" viewBox="0 0 400 145" role="img" aria-label="Đồ thị điện áp"><text x="200" y="80" text-anchor="middle" fill="#94a1b6" font-size="12">Chưa nhận dữ liệu INA219</text></svg></div><table class="data-table"><tbody><tr><td>Giải mã · ESP32</td><td id="decryptValue">—</td></tr><tr><td>Mã hóa · Python</td><td id="encryptValue">—</td></tr><tr><td>Xử lý lệnh · ESP32</td><td id="latencyValue">—</td></tr><tr><td>Độ trễ đầu-cuối · E2E</td><td id="e2eValue">—</td></tr><tr><td>Đóng gói AES · Python</td><td id="pythonValue">—</td></tr><tr><td>Chế độ AES · ESP32 báo</td><td id="firmwareMode">Chưa có dữ liệu</td></tr></tbody></table></div>
      <div class="stats-block"><div class="stats-toolbar"><h3>Thống kê số liệu</h3><div class="stats-controls"><input type="date" id="statsDate" aria-label="Ngày thống kê"><select id="statsMode" aria-label="Lọc chế độ AES"><option value="all">Tất cả chế độ</option><option value="on">AES bật</option><option value="off">AES tắt</option></select><a class="btn small" id="exportMeasurements" href="/api/performance.csv"><svg class="icon"><use href="#i-download"/></svg>CSV số đo</a></div></div><div class="stats-scroll"><table class="stats-table"><thead><tr><th>Thông số</th><th>Đơn vị</th><th>N</th><th>Gần nhất</th><th>Min</th><th>Trung bình</th><th>P95</th><th>Max</th></tr></thead><tbody id="statsBody"><tr><td colspan="8">Chưa có số liệu thực.</td></tr></tbody></table></div><p class="fineprint" id="statsNote">Tối đa 2.000 bản ghi/ngày; N tính riêng cho từng chỉ số.</p></div>
 </div>
    </div>
-   <!-- COMMAND_MEMORY_PANEL -->
    <details class="measurement-info"><summary>Thông tin phép đo</summary>
     <p>Trạng thái khóa theo GPIO; chưa có cảm biến vị trí chốt. Mã hóa đo trên Python, xác thực–giải mã đo trên ESP32.</p>
     <p>E2E: từ chuẩn bị lệnh đến ACK GPIO, gồm thời gian mạng. Dấu “—”: chưa có số đo. Thời gian hiển thị UTC+7.</p>
@@ -882,7 +875,7 @@ async function refreshStatistics(force=false){
   statsLastFetch=Date.now();
  }catch(e){$('statsNote').textContent='Chưa lấy được thống kê: '+e.message}finally{statsBusy=false}
 }
-function render(){const s=state,d=s.device;const online=s.mqtt.connected&&!s.mqtt.offline;$('clock').textContent=shortTime(s.server_time)+' · UTC+7';$('mqttBadge').classList.toggle('live',online);$('mqttBadge').querySelector('span').textContent=s.mqtt.offline?'MQTT · Xem offline':online?'MQTT · Đã kết nối':'MQTT · Chưa kết nối';$('connectionError').hidden=!s.mqtt.error&&!s.mqtt.offline;$('connectionError').textContent=s.mqtt.offline?'Đang xem offline. Web không kết nối broker và không phát lệnh.':s.mqtt.error||'';$('aesSwitch').setAttribute('aria-checked',s.aes_enabled);$('modeTitle').textContent=s.aes_enabled?'AES-128-GCM':'Plaintext · AES tắt';$('modeSubtitle').textContent=s.aes_enabled?'Mã hóa payload đang bật':'Gửi trực tiếp chữ ON / OFF';$('modeNote').classList.toggle('warn',!s.aes_enabled);let note=s.mode_pending?'Đang chờ ESP32 xác nhận đổi chế độ AES…':!s.mode_ready?'Chờ ESP32 xác nhận chế độ AES.':'ESP32 xác nhận AES '+(d.aes_enabled?'BẬT':'TẮT')+' · TLS bật';$('modeNoteText').textContent=note;$('deviceLiveness').textContent=d.recent?'Vừa nhận phản hồi ESP32':d.last_seen?'Chưa có phản hồi gần đây · '+shortTime(d.last_seen):'Chưa có phản hồi ESP32';$('deviceDot').style.background=d.recent?'#73d9b8':'#a6b6d1';$('doorStatus').querySelector('span').textContent=d.relay_on===null?'Chưa xác nhận':d.relay_on?'Đang mở khóa · Relay ON':'Đang khóa · Relay OFF';$('doorStatus').classList.toggle('on',d.relay_on===true);$('doorSwitch').setAttribute('aria-checked',d.relay_on===true);$('doorSwitch').setAttribute('aria-busy',s.control_pending?'true':'false');$('doorAction').textContent=s.control_pending?'Đang chờ ESP32 xác nhận…':d.relay_on===null?'Chờ ESP32 xác nhận trạng thái':d.relay_on?'Đang mở khóa · Gạt để khóa lại':'Đang khóa · Gạt để mở khóa';$('doorLast').textContent=d.state_ts?'ESP32 báo lúc '+shortTime(d.state_ts)+(age(d.state_ts)>30?' · Trạng thái gần nhất':''):'Đang chờ trạng thái do ESP32 báo.';$('sensorState').textContent=sensorStatusText(d);metric('voltage_v','voltage','voltageNote');metric('current_ma','current','currentNote',1);metric('power_w','power','powerNote');metric('decrypt_us','decrypt','decryptNote',0);if(d.aes_enabled===false)$('decryptNote').textContent='AES tắt · Không thực hiện giải mã';$('heapValue').textContent=state.metrics.heap_free_bytes?num(state.metrics.heap_free_bytes.value/1024,1)+' KiB':'—';$('decryptValue').textContent=state.metrics.decrypt_us?num(state.metrics.decrypt_us.value,0)+' µs':'—';$('pythonValue').textContent=state.latest_packet?.publisher_processing_us!=null?num(state.latest_packet.publisher_processing_us,1)+' µs':'—';$('firmwareMode').textContent=d.aes_enabled===null?'Chưa có dữ liệu':(d.aes_enabled?'AES bật':'AES tắt')+' · '+shortTime(d.aes_ts);$('tamperDescription').textContent=s.aes_enabled?'Sửa một bit ciphertext của lệnh ON, giữ nguyên Tag.':'Đối chứng: gửi ON thuần bằng quyền publish MQTT.';$('tamperButton').textContent=s.aes_enabled?'Gửi gói ON bị sửa':'Gửi ON thuần · Đối chứng';const rp=s.replay_packet;$('replayInfo').textContent=rp?'Mẫu '+rp.command+' · '+(rp.encrypted?'AES-128-GCM':'Plaintext')+' · tạo '+shortTime(rp.created_at)+' · '+age(rp.created_at)+' giây trước.'+(rp.encrypted?'':' Plaintext không có Nonce/Timestamp.'): 'Chưa có mẫu. Hãy gửi ON/OFF hợp lệ hoặc mẫu OFF ở kịch bản 1.';const ready=online&&!s.cycle_energy_active&&s.mode_ready&&!s.mode_pending&&d.aes_enabled===s.aes_enabled;document.querySelectorAll('.send-btn').forEach(b=>b.disabled=!ready||pending);$('doorSwitch').disabled=!ready||pending||s.control_pending||typeof d.relay_on!=='boolean'||!d.state_ts||age(d.state_ts)>30||!d.recent;$('replayButton').disabled=!ready||pending||!rp;$('copyReplay').disabled=!rp;$('aesSwitch').disabled=pending||!online||!s.mode_ready||s.mode_pending||s.cycle_energy_active;renderTimings();renderPacket(s.latest_packet);renderChart(s.samples);refreshStatistics()}
+function render(){const s=state,d=s.device;const online=s.mqtt.connected&&!s.mqtt.offline;$('clock').textContent=shortTime(s.server_time)+' · UTC+7';$('mqttBadge').classList.toggle('live',online);$('mqttBadge').querySelector('span').textContent=s.mqtt.offline?'MQTT · Xem offline':online?'MQTT · Đã kết nối':'MQTT · Chưa kết nối';$('connectionError').hidden=!s.mqtt.error&&!s.mqtt.offline;$('connectionError').textContent=s.mqtt.offline?'Đang xem offline. Web không kết nối broker và không phát lệnh.':s.mqtt.error||'';$('aesSwitch').setAttribute('aria-checked',s.aes_enabled);$('modeTitle').textContent=s.aes_enabled?'AES-128-GCM':'Plaintext · AES tắt';$('modeSubtitle').textContent=s.aes_enabled?'Mã hóa payload đang bật':'Gửi trực tiếp chữ ON / OFF';$('modeNote').classList.toggle('warn',!s.aes_enabled);let note=s.mode_pending?'Đang chờ ESP32 xác nhận đổi chế độ AES…':!s.mode_ready?'Chờ ESP32 xác nhận chế độ AES.':'ESP32 xác nhận AES '+(d.aes_enabled?'BẬT':'TẮT')+' · TLS bật';$('modeNoteText').textContent=note;$('deviceLiveness').textContent=d.recent?'Vừa nhận phản hồi ESP32':d.last_seen?'Chưa có phản hồi gần đây · '+shortTime(d.last_seen):'Chưa có phản hồi ESP32';$('deviceDot').style.background=d.recent?'#73d9b8':'#a6b6d1';$('doorStatus').querySelector('span').textContent=d.relay_on===null?'Chưa xác nhận':d.relay_on?'Đang mở khóa · Relay ON':'Đang khóa · Relay OFF';$('doorStatus').classList.toggle('on',d.relay_on===true);$('doorSwitch').setAttribute('aria-checked',d.relay_on===true);$('doorSwitch').setAttribute('aria-busy',s.control_pending?'true':'false');$('doorAction').textContent=s.control_pending?'Đang chờ ESP32 xác nhận…':d.relay_on===null?'Chờ ESP32 xác nhận trạng thái':d.relay_on?'Đang mở khóa · Gạt để khóa lại':'Đang khóa · Gạt để mở khóa';$('doorLast').textContent=d.state_ts?'ESP32 báo lúc '+shortTime(d.state_ts)+(age(d.state_ts)>30?' · Trạng thái gần nhất':''):'Đang chờ trạng thái do ESP32 báo.';$('sensorState').textContent=sensorStatusText(d);metric('voltage_v','voltage','voltageNote');metric('current_ma','current','currentNote',1);metric('power_w','power','powerNote');metric('decrypt_us','decrypt','decryptNote',0);if(d.aes_enabled===false)$('decryptNote').textContent='AES tắt · Không thực hiện giải mã';$('decryptValue').textContent=state.metrics.decrypt_us?num(state.metrics.decrypt_us.value,0)+' µs':'—';$('pythonValue').textContent=state.latest_packet?.publisher_processing_us!=null?num(state.latest_packet.publisher_processing_us,1)+' µs':'—';$('firmwareMode').textContent=d.aes_enabled===null?'Chưa có dữ liệu':(d.aes_enabled?'AES bật':'AES tắt')+' · '+shortTime(d.aes_ts);$('tamperDescription').textContent=s.aes_enabled?'Sửa một bit ciphertext của lệnh ON, giữ nguyên Tag.':'Đối chứng: gửi ON thuần bằng quyền publish MQTT.';$('tamperButton').textContent=s.aes_enabled?'Gửi gói ON bị sửa':'Gửi ON thuần · Đối chứng';const rp=s.replay_packet;$('replayInfo').textContent=rp?'Mẫu '+rp.command+' · '+(rp.encrypted?'AES-128-GCM':'Plaintext')+' · tạo '+shortTime(rp.created_at)+' · '+age(rp.created_at)+' giây trước.'+(rp.encrypted?'':' Plaintext không có Nonce/Timestamp.'): 'Chưa có mẫu. Hãy gửi ON/OFF hợp lệ hoặc mẫu OFF ở kịch bản 1.';const ready=online&&!s.cycle_energy_active&&s.mode_ready&&!s.mode_pending&&d.aes_enabled===s.aes_enabled;document.querySelectorAll('.send-btn').forEach(b=>b.disabled=!ready||pending);$('doorSwitch').disabled=!ready||pending||s.control_pending||typeof d.relay_on!=='boolean'||!d.state_ts||age(d.state_ts)>30||!d.recent;$('replayButton').disabled=!ready||pending||!rp;$('copyReplay').disabled=!rp;$('aesSwitch').disabled=pending||!online||!s.mode_ready||s.mode_pending||s.cycle_energy_active;renderTimings();renderPacket(s.latest_packet);renderChart(s.samples);refreshStatistics()}
 function renderPacket(p){if(!p)return;$('packetMode').textContent=p.encrypted?'AES-128-GCM':'Plaintext';$('packetPayload').textContent=p.payload;$('packetLength').textContent=p.payload_chars+' ký tự';$('packetTime').textContent=shortTime(p.sent_at);$('packetNonce').textContent=p.nonce||'Không dùng';$('packetTag').textContent=p.tag||'Không dùng';$('packetAad').textContent=p.aad?(p.aad+' · epoch '+p.timestamp):'Không dùng';$('packetCt').textContent=p.ciphertext||'Không dùng';$('copyPacket').disabled=false;$('downloadPacket').disabled=false}
 function renderChart(samples){const svg=$('voltageChart');svg.replaceChildren();const vals=samples.filter(s=>Number.isFinite(s.voltage_v));const ns='http://www.w3.org/2000/svg';function el(tag,attrs,txt){const e=document.createElementNS(ns,tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));if(txt)e.textContent=txt;svg.append(e);return e}if(vals.length<2){el('text',{x:200,y:80,'text-anchor':'middle',fill:'#94a1b6','font-size':12},vals.length?'Cần thêm một số đo để vẽ đồ thị':'Chưa nhận dữ liệu INA219');return}let low=Math.min(...vals.map(s=>s.voltage_v)),high=Math.max(...vals.map(s=>s.voltage_v));if(high-low<.1){low-=.05;high+=.05}const minT=vals[0].ts,maxT=Math.max(minT+.001,vals.at(-1).ts);el('line',{x1:35,y1:115,x2:390,y2:115,stroke:'#e1e8f1'});el('text',{x:0,y:22,fill:'#8d9ab0','font-size':10},num(high));el('text',{x:0,y:114,fill:'#8d9ab0','font-size':10},num(low));el('polyline',{points:vals.map(s=>(35+(s.ts-minT)/(maxT-minT)*350)+','+(115-(s.voltage_v-low)/(high-low)*95)).join(' '),fill:'none',stroke:'#173e83','stroke-width':2,'stroke-linejoin':'round'});el('text',{x:35,y:138,fill:'#8d9ab0','font-size':9},shortTime(minT));el('text',{x:390,y:138,fill:'#8d9ab0','font-size':9,'text-anchor':'end'},shortTime(maxT))}
 async function refreshHistory(){
@@ -915,14 +908,13 @@ async function copy(text){try{await navigator.clipboard.writeText(text);toast('�
 function panes(which){$('historyPane').hidden=which!=='history';$('measurePane').hidden=which!=='measure';for(const [key,id] of [['history','historyTab'],['measure','measureTab']]){$(id).classList.toggle('active',key===which);$(id).setAttribute('aria-selected',key===which)}}$('historyTab').onclick=()=>panes('history');$('measureTab').onclick=()=>{panes('measure');refreshStatistics(true)};$('statsDate').onchange=()=>refreshStatistics(true);$('statsMode').onchange=()=>refreshStatistics(true);$('historyDate').onchange=()=>refreshHistory().catch(e=>toast(e.message,true));function moveDay(delta){const d=new Date($('historyDate').value+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+delta);$('historyDate').value=d.toISOString().slice(0,10);refreshHistory().catch(e=>toast(e.message,true))}$('prevDate').onclick=()=>moveDay(-1);$('nextDate').onclick=()=>moveDay(1);
 document.querySelectorAll('.send-btn').forEach(b=>b.disabled=true);
 (async function poll(){await refresh();setTimeout(poll,2000)})();
-</script><script src="/static/cycle_energy.js"></script><script src="/static/command_memory.js"></script></body></html>
+</script><script src="/static/cycle_energy.js"></script></body></html>
 
 '''
 
 
 HTML_TEMPLATE = HTML_TEMPLATE.replace("<!-- CYCLE_ENERGY_PANEL -->", (BASE / "cycle_energy_panel.html").read_text(encoding="utf-8"))
 
-HTML_TEMPLATE = HTML_TEMPLATE.replace("<!-- COMMAND_MEMORY_PANEL -->", (BASE / "command_memory_panel.html").read_text(encoding="utf-8"))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="ESP32 AES-128-GCM Dashboard")

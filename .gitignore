@@ -108,3 +108,11 @@ main/mqtt_config.local.h
 /report_evidence_*.zip
 /ui_preview/
 /measurement_fix/
+/output/
+/tmp/
+
+# Test and coverage outputs
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml

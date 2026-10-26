@@ -3,7 +3,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "esp_err.h"
-#include "command_memory.h"
 
 #if __has_include("mqtt_config.local.h")
 #include "mqtt_config.local.h"
@@ -20,7 +19,7 @@ void mqtt_app_start(void);
 void mqtt_app_publish_cycle(const char *json);
 void mqtt_app_publish_command_ack(const char *command_id, int state,
                                   int64_t decrypt_us, int64_t execution_us, bool applied,
-                                  const command_memory_t *memory);
+                                  bool aes_enabled);
 // Được hardware_control.c gọi cho UNLOCKED và LOCKED.
 void mqtt_app_publish_status(const char *status, const char *msg);
 

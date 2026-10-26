@@ -95,7 +95,7 @@ void mqtt_app_publish_status(const char *status, const char *msg) {
  * Telemetry không mang id này, nên không bị ghép nhầm vào số đo lệnh.
  * GPIO đã đặt không có nghĩa chốt cơ khí đã tới vị trí cuối. */
 void mqtt_app_publish_command_ack(const char *id, int state, int64_t decrypt_us, int64_t execution_us, bool applied,
-                                  const command_memory_t *memory) {
+                                  bool aes_enabled) {
     if (!id || strlen(id) != 16) return;
     for (unsigned i = 0; i < 16; ++i) if (hex_char_to_val(id[i]) < 0) return;
     char timing[48];
@@ -104,21 +104,14 @@ void mqtt_app_publish_command_ack(const char *id, int state, int64_t decrypt_us,
     char execution[48];
     if (applied && execution_us >= 0) snprintf(execution, sizeof(execution), "%" PRId64, execution_us);
     else snprintf(execution, sizeof(execution), "null");
-    command_memory_t empty = {0};
-    if (!memory) memory = &empty;
-    char json[896];
+    char json[512];
     int n = snprintf(json, sizeof(json),
         "{\"status\":\"%s\",\"message\":\"%s\",\"command_id\":\"%s\","
-        "\"command\":\"%s\",\"phase\":\"%s\",\"decrypt_us\":%s,\"execution_us\":%s,\"aes_enabled\":%s,"
-        "\"memory\":{\"v\":3,\"valid\":%s,\"heap_before\":%" PRIu32 ",\"heap_after\":%" PRIu32
-        ",\"heap_peak\":%" PRIu32 ",\"heap_retained\":%" PRIu32 ",\"allocations\":%" PRIu32
-        ",\"stack_free_min\":%" PRIu32 ",\"context_bytes\":%" PRIu32 ",\"stack_peak\":%" PRIu32 ",\"stack_status\":%" PRIu32 "}}",
+        "\"command\":\"%s\",\"phase\":\"%s\",\"decrypt_us\":%s,\"execution_us\":%s,\"aes_enabled\":%s}",
         applied ? (state ? "UNLOCKED" : "LOCKED") : "BUSY",
         applied ? "GPIO relay da cap nhat" : "Khong thuc thi duoc GPIO / hang doi day",
         id, state ? "ON" : "OFF", applied ? "applied" : "rejected", timing, execution,
-        memory->aes_enabled ? "true" : "false", memory->valid ? "true" : "false",
-        memory->heap_before, memory->heap_after, memory->heap_peak, memory->heap_retained,
-        memory->allocations, memory->stack_free_min, memory->context_bytes, memory->stack_peak, memory->stack_status);
+        aes_enabled ? "true" : "false");
     if (n > 0 && (size_t)n < sizeof(json)) publish_json(json);
 }
 
@@ -288,11 +281,10 @@ void mqtt_app_publish_telemetry(bool valid, float voltage, float current_ma,
         "\"voltage_v\":null,\"current_ma\":null,\"power_w\":null");
     char json[640];
     int n = snprintf(json, sizeof(json),
-        "{%s,\"ina219_ok\":%s,\"sensor_error\":%d,\"sensor_error_name\":\"%s\",\"sensor_stage\":\"%s\",\"bus_raw\":%d,\"shunt_raw\":%d,\"relay_on\":%s,\"aes_enabled\":%s,\"heap_free_bytes\":%" PRIu32 "}",
+        "{%s,\"ina219_ok\":%s,\"sensor_error\":%d,\"sensor_error_name\":\"%s\",\"sensor_stage\":\"%s\",\"bus_raw\":%d,\"shunt_raw\":%d,\"relay_on\":%s,\"aes_enabled\":%s}",
         values, valid ? "true" : "false", (int)error, esp_err_to_name(error),
         sensor_stage ? sensor_stage : "unknown", bus_raw, shunt_raw,
-        hardware_is_unlocked() ? "true" : "false", crypto_is_aes_enabled() ? "true" : "false",
-        (uint32_t)esp_get_free_heap_size());
+        hardware_is_unlocked() ? "true" : "false", crypto_is_aes_enabled() ? "true" : "false");
     if (n > 0 && (size_t)n < sizeof(json))
         esp_mqtt_client_enqueue(global_mqtt_client, "device/esp32/telemetry", json, n, 0, 0, true);
 }

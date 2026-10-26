@@ -27,7 +27,56 @@ class ExecutionTimingTests(unittest.TestCase):
         d.pending_commands[command_id] = dict(command='ON', encrypted=encrypted, start_ns=1_000_000_000)
         d.latency = dict(status='pending', command_id=command_id, value_ms=None, ts=time.time())
         return dict(command_id=command_id, command='ON', phase='applied', status='UNLOCKED',
-                    execution_us=2500, decrypt_us=100)
+                    execution_us=2500, decrypt_us=100, aes_enabled=encrypted)
+
+    def test_wrong_mode_ack_does_not_complete_command(self):
+        ack = self.pending(encrypted=False)
+        self.dashboard._receive_command_ack(dict(ack, aes_enabled=True), 1_100_000_000, time.time())
+        self.assertEqual(self.dashboard.latency['status'], 'pending')
+        self.assertIn(ack['command_id'], self.dashboard.pending_commands)
+        self.dashboard._receive_command_ack(ack, 1_200_000_000, time.time())
+        self.assertEqual(self.dashboard.latency['value_ms'], 2.5)
+        self.assertNotIn(ack['command_id'], self.dashboard.pending_commands)
+
+    def test_old_database_and_ack_remain_compatible(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'legacy.sqlite3'
+            store = Store(path)
+            with store.db:
+                store.db.execute('ALTER TABLE measurements ADD COLUMN command_memory_json TEXT')
+                store.db.execute('ALTER TABLE measurements ADD COLUMN heap_free_bytes REAL')
+            store.record_measurement(dict(ts=time.time(), mode='on', source='command',
+                outcome='applied', command_id='old', execution_ms=3.0))
+            with store.db:
+                store.db.execute('UPDATE measurements SET command_memory_json=?,heap_free_bytes=?',
+                                 ('{"heap_peak":0}', 170000))
+            store.close()
+
+            app = create_app(path)
+            d = app.extensions['dashboard']
+            try:
+                command_id = '0123456789abcdef'
+                d.store.record_measurement(dict(ts=time.time(), mode='off', source='command',
+                    outcome='pending', command_id=command_id, command='ON'))
+                d.pending_commands[command_id] = dict(command='ON', encrypted=False,
+                    start_ns=1_000_000_000, e2e_start_ns=900_000_000)
+                d._receive_command_ack(dict(command_id=command_id, command='ON', phase='applied',
+                    status='UNLOCKED', aes_enabled=False, execution_us=2500,
+                    memory={'v':3, 'heap_peak':0}), 1_200_000_000, time.time())
+                row = d.store.db.execute('SELECT * FROM measurements WHERE command_id=?',
+                                         (command_id,)).fetchone()
+                self.assertEqual(row['outcome'], 'applied')
+                self.assertEqual(row['execution_ms'], 2.5)
+                self.assertEqual(row['e2e_ms'], 300)
+                self.assertIsNone(row['command_memory_json'])
+                old = d.store.db.execute("SELECT * FROM measurements WHERE command_id='old'").fetchone()
+                self.assertEqual(old['command_memory_json'], '{"heap_peak":0}')
+                self.assertEqual(old['heap_free_bytes'], 170000)
+                csv = app.test_client().get('/api/performance.csv').get_data(as_text=True)
+                self.assertNotIn('heap_free_bytes', csv)
+                self.assertIn('execution_ms', csv)
+            finally:
+                d.store.close()
 
     def test_device_time_not_round_trip_for_both_modes(self):
         for encrypted in (True, False):
