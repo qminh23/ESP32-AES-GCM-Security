@@ -157,7 +157,7 @@ source .env.local
 set +a
 ```
 
-Dashboard **không tự tải `.env.local`**. Nạp biến trong terminal chạy dashboard/batch; PowerShell dùng `$env:MQTT_BROKER=...`.
+Dashboard tự tải `.env.local` từ thư mục gốc dự án khi khởi động. Biến môi trường đã đặt trong terminal được ưu tiên. Tệp hỗ trợ `NAME=value` và `export NAME='value'`, không thực thi lệnh shell hay nội suy biến. Khi đổi cấu hình, khởi động lại dashboard.
 
 | Biến | Ý nghĩa |
 | --- | --- |

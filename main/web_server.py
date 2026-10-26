@@ -26,8 +26,10 @@ from pathlib import Path
 from flask import Flask, Response, jsonify, render_template_string, request
 import paho.mqtt.client as mqtt
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from local_config import load_local_environment
 
 BASE = Path(__file__).resolve().parent
+load_local_environment()
 VN = timezone(timedelta(hours=7))
 AES_KEY = bytes.fromhex(os.getenv("AES_KEY_HEX", "0102030405060708090A0B0C0D0E0F10"))
 if len(AES_KEY) != 16:

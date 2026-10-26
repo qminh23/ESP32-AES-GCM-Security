@@ -5,18 +5,15 @@
 #include "esp_err.h"
 #include "command_memory.h"
 
-/* Local broker settings are excluded from Git. */
 #if __has_include("mqtt_config.local.h")
 #include "mqtt_config.local.h"
 #endif
+
 #ifndef MQTT_BROKER_URI
-#define MQTT_BROKER_URI "mqtts://mqtt.example.com:8883"
+#define MQTT_BROKER_URI "mqtts://i9509b90.ala.asia-southeast1.emqxsl.com:8883"
 #endif
-#ifndef MQTT_USERNAME
-#define MQTT_USERNAME "YOUR_MQTT_USER"
-#endif
-#ifndef MQTT_PASSWORD
-#define MQTT_PASSWORD "YOUR_MQTT_PASSWORD"
+#if !defined(MQTT_USERNAME) || !defined(MQTT_PASSWORD)
+#error "Dien tai khoan MQTT trong main/mqtt_config.local.h (xem file .example)."
 #endif
 
 void mqtt_app_start(void);

@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE svg
+  PUBLIC '-//W3C//DTD SVG 1.0//EN'
+  'http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd'>
+<svg width="600" height="853" preserveAspectRatio="xMinYMin meet" viewBox="0 0 600 853" xmlns="http://www.w3.org/2000/svg" version="1.0" fill-rule="evenodd" xmlns:xlink="http://www.w3.org/1999/xlink">
+	<title>...</title>
+	<desc>...</desc>
+	<clipPath id="clip">
+		<rect x="0" y="0" width="600" height="853"/>
+	</clipPath>
+	<g id="group" transform="scale(1,-1) translate(0,-853)" style="clip-path: url(#clip)">
+		<g transform="">
+			<rect x="0" y="0" width="600" height="853" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(100%,100%,100%); fill-rule: evenodd;"/>
+			<text x="55.7333984375" y="830" style="font-family: Arial; font-weight: bold; font-size: 12.5px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,1660) scale(1,-1)">PHÍA MÃ HÓA / PYTHON</text>
+			<text x="406.3597412109375" y="830" style="font-family: Arial; font-weight: bold; font-size: 12.5px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,1660) scale(1,-1)">PHÍA GIẢI MÃ / ESP32</text>
+			<rect x="59" y="777" width="140" height="34" rx="17.0" ry="17.0" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 1; fill: rgb(100%,100%,100%); fill-rule: evenodd;"/>
+			<text x="109.17822265625" y="790.0" style="font-family: Arial; font-size: 11.5px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,1580) scale(1,-1)">Bắt đầu</text>
+			<rect x="376" y="777" width="192" height="34" rx="17.0" ry="17.0" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 1; fill: rgb(100%,100%,100%); fill-rule: evenodd;"/>
+			<text x="418.6300048828125" y="790.0" style="font-family: Arial; font-size: 11.5px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,1580) scale(1,-1)">Nhận payload MQTT</text>
+			<polyline points="129 777, 129 748" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 1.15; fill: None; fill-rule: evenodd;"/>
+			<polygon points="129 748, 131.65 754, 126.35 754" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 0.4; fill: rgb(0%,0%,0%); fill-rule: evenodd;"/>
+			<rect x="16" y="678" width="226" height="70" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 1; fill: rgb(100%,100%,100%); fill-rule: evenodd;"/>
+			<text x="78.949365234375" y="728.022" style="font-family: Arial; font-weight: bold; font-size: 11.7px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,1456) scale(1,-1)">Chuẩn bị bản rõ P</text>
+			<text x="53.555566406249994" y="709.0219999999999" style="font-family: Arial; font-size: 11.7px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,1418) scale(1,-1)">ON:&lt;id16&gt; hoặc OFF:&lt;id16&gt;</text>
+			<text x="87.37016601562499" y="690.0219999999999" style="font-family: Arial; font-size: 11.7px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,1380) scale(1,-1)">Khóa K: 16 byte</text>
+			<polyline points="129 678, 129 641" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 1.15; fill: None; fill-rule: evenodd;"/>
+			<polygon points="129 641, 131.65 647, 126.35 647" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 0.4; fill: rgb(0%,0%,0%); fill-rule: evenodd;"/>
+			<rect x="16" y="571" width="226" height="70" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 1; fill: rgb(100%,100%,100%); fill-rule: evenodd;"/>
+			<text x="63.99873046875" y="621.0219999999999" style="font-family: Arial; font-weight: bold; font-size: 11.7px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,1242) scale(1,-1)">Sinh Nonce ngẫu nhiên</text>
+			<text x="109.810400390625" y="602.0219999999999" style="font-family: Arial; font-size: 11.7px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,1204) scale(1,-1)">12 byte</text>
+			<text x="54.5924560546875" y="583.0219999999999" style="font-family: Arial; font-size: 11.7px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,1166) scale(1,-1)">Không lặp Nonce với cùng K</text>
+			<polyline points="129 571, 129 534" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 1.15; fill: None; fill-rule: evenodd;"/>
+			<polygon points="129 534, 131.65 540, 126.35 540" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 0.4; fill: rgb(0%,0%,0%); fill-rule: evenodd;"/>
+			<rect x="16" y="464" width="226" height="70" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 1; fill: rgb(100%,100%,100%); fill-rule: evenodd;"/>
+			<text x="68.540478515625" y="514.0219999999999" style="font-family: Arial; font-weight: bold; font-size: 11.7px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,1028) scale(1,-1)">Tạo Timestamp / AAD</text>
+			<text x="69.50310058593749" y="495.022" style="font-family: Arial; font-size: 11.7px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,990) scale(1,-1)">Unix timestamp: 8 byte</text>
+			<text x="69.48310546875" y="476.022" style="font-family: Arial; font-size: 11.7px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,952) scale(1,-1)">Số nguyên little-endian</text>
+			<polyline points="129 464, 129 427" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 1.15; fill: None; fill-rule: evenodd;"/>
+			<polygon points="129 427, 131.65 433, 126.35 433" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 0.4; fill: rgb(0%,0%,0%); fill-rule: evenodd;"/>
+			<rect x="16" y="357" width="226" height="70" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 1; fill: rgb(100%,100%,100%); fill-rule: evenodd;"/>
+			<text x="67.88920898437499" y="407.022" style="font-family: Arial; font-weight: bold; font-size: 11.7px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,814) scale(1,-1)">Mã hóa AES-128-GCM</text>
+			<text x="57.46604003906249" y="388.022" style="font-family: Arial; font-size: 11.7px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,776) scale(1,-1)">Đầu vào: K, Nonce, P, AAD</text>
+			<text x="62.0192138671875" y="369.022" style="font-family: Arial; font-size: 11.7px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,738) scale(1,-1)">Đầu ra: Ciphertext và Tag</text>
+			<polyline points="129 357, 129 320" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 1.15; fill: None; fill-rule: evenodd;"/>
+			<polygon points="129 320, 131.65 326, 126.35 326" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 0.4; fill: rgb(0%,0%,0%); fill-rule: evenodd;"/>
+			<rect x="16" y="250" width="226" height="70" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 1; fill: rgb(100%,100%,100%); fill-rule: evenodd;"/>
+			<text x="77.6553955078125" y="290.52200000000005" style="font-family: Arial; font-weight: bold; font-size: 11.7px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,581) scale(1,-1)">Ghép gói nhị phân</text>
+			<text x="50.970483398437494" y="271.52200000000005" style="font-family: Arial; font-size: 11.7px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,543) scale(1,-1)">Nonce | Tag | Timestamp | CT</text>
+			<polyline points="129 250, 129 213" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 1.15; fill: None; fill-rule: evenodd;"/>
+			<polygon points="129 213, 131.65 219, 126.35 219" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 0.4; fill: rgb(0%,0%,0%); fill-rule: evenodd;"/>
+			<rect x="16" y="143" width="226" height="70" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 1; fill: rgb(100%,100%,100%); fill-rule: evenodd;"/>
+			<text x="61.3907958984375" y="193.02200000000005" style="font-family: Arial; font-weight: bold; font-size: 11.7px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,386) scale(1,-1)">Chuyển sang chuỗi HEX</text>
+			<text x="77.29833984375" y="174.02200000000005" style="font-family: Arial; font-size: 11.7px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,348) scale(1,-1)">Gửi MQTT qua TLS</text>
+			<text x="98.5931396484375" y="155.02200000000005" style="font-family: Arial; font-size: 11.7px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,310) scale(1,-1)">retain=false</text>
+			<polyline points="129 143, 129 64" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 1.15; fill: None; fill-rule: evenodd;"/>
+			<polygon points="129 64, 131.65 70, 126.35 70" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 0.4; fill: rgb(0%,0%,0%); fill-rule: evenodd;"/>
+			<rect x="59" y="30" width="140" height="34" rx="17.0" ry="17.0" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 1; fill: rgb(100%,100%,100%); fill-rule: evenodd;"/>
+			<text x="107.903564453125" y="43.0" style="font-family: Arial; font-size: 11.5px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,86) scale(1,-1)">Kết thúc</text>
+			<polyline points="472 777, 472 753" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 1.15; fill: None; fill-rule: evenodd;"/>
+			<polygon points="472 753, 474.65 759, 469.35 759" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 0.4; fill: rgb(0%,0%,0%); fill-rule: evenodd;"/>
+			<polygon points="472 753, 570 722, 472 691, 374 722" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 1; fill: rgb(100%,100%,100%); fill-rule: evenodd;"/>
+			<text x="439.718017578125" y="726.09" style="font-family: Arial; font-size: 11.5px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,1452) scale(1,-1)">HEX / độ dài</text>
+			<text x="452.5628662109375" y="710.09" style="font-family: Arial; font-size: 11.5px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,1420) scale(1,-1)">hợp lệ?</text>
+			<polyline points="472 691, 472 663" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 1.15; fill: None; fill-rule: evenodd;"/>
+			<polygon points="472 663, 474.65 669, 469.35 669" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 0.4; fill: rgb(0%,0%,0%); fill-rule: evenodd;"/>
+			<text x="484" y="673" style="font-family: Arial; font-size: 10px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,1346) scale(1,-1)">Có</text>
+			<rect x="362" y="603" width="220" height="60" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 1; fill: rgb(100%,100%,100%); fill-rule: evenodd;"/>
+			<text x="391.278759765625" y="646.124" style="font-family: Arial; font-weight: bold; font-size: 11.4px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,1292) scale(1,-1)">Giải mã HEX, tách các trường</text>
+			<text x="392.49501953125" y="629.124" style="font-family: Arial; font-size: 11.4px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,1258) scale(1,-1)">Nonce, Tag, Timestamp (AAD),</text>
+			<text x="446.02158203125" y="612.124" style="font-family: Arial; font-size: 11.4px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,1224) scale(1,-1)">Ciphertext</text>
+			<polyline points="472 603, 472 581" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 1.15; fill: None; fill-rule: evenodd;"/>
+			<polygon points="472 581, 474.65 587, 469.35 587" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 0.4; fill: rgb(0%,0%,0%); fill-rule: evenodd;"/>
+			<rect x="362" y="527" width="220" height="54" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 1; fill: rgb(100%,100%,100%); fill-rule: evenodd;"/>
+			<text x="410.968017578125" y="559.5899999999999" style="font-family: Arial; font-weight: bold; font-size: 11.5px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,1119) scale(1,-1)">Giải mã AES-128-GCM</text>
+			<text x="396.8709716796875" y="540.5899999999999" style="font-family: Arial; font-size: 11.5px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,1081) scale(1,-1)">và xác thực Tag bằng khóa K</text>
+			<polyline points="472 527, 472 507" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 1.15; fill: None; fill-rule: evenodd;"/>
+			<polygon points="472 507, 474.65 513, 469.35 513" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 0.4; fill: rgb(0%,0%,0%); fill-rule: evenodd;"/>
+			<polygon points="472 507, 570 480, 472 453, 374 480" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 1; fill: rgb(100%,100%,100%); fill-rule: evenodd;"/>
+			<text x="441.0572509765625" y="476.09" style="font-family: Arial; font-size: 11.5px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,952) scale(1,-1)">Tag hợp lệ?</text>
+			<polyline points="472 453, 472 425" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 1.15; fill: None; fill-rule: evenodd;"/>
+			<polygon points="472 425, 474.65 431, 469.35 431" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 0.4; fill: rgb(0%,0%,0%); fill-rule: evenodd;"/>
+			<text x="484" y="435" style="font-family: Arial; font-size: 10px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,870) scale(1,-1)">Có</text>
+			<rect x="362" y="368" width="220" height="57" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 1; fill: rgb(100%,100%,100%); fill-rule: evenodd;"/>
+			<text x="398.85546875" y="402.192" style="font-family: Arial; font-weight: bold; font-size: 11.2px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,804) scale(1,-1)">Đọc timestamp đã xác thực</text>
+			<text x="398.70234375" y="383.192" style="font-family: Arial; font-size: 11.2px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,766) scale(1,-1)">Khởi tạo giờ nếu chưa hợp lệ</text>
+			<polyline points="472 368, 472 346" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 1.15; fill: None; fill-rule: evenodd;"/>
+			<polygon points="472 346, 474.65 352, 469.35 352" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 0.4; fill: rgb(0%,0%,0%); fill-rule: evenodd;"/>
+			<polygon points="472 346, 570 311, 472 276, 374 311" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 1; fill: rgb(100%,100%,100%); fill-rule: evenodd;"/>
+			<text x="428.3127197265625" y="315.226" style="font-family: Arial; font-size: 11.1px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,630) scale(1,-1)">Thời gian hợp lệ?</text>
+			<text x="431.301806640625" y="299.226" style="font-family: Arial; font-size: 11.1px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,598) scale(1,-1)">Cửa sổ ±10 giây</text>
+			<polyline points="472 276, 472 245" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 1.15; fill: None; fill-rule: evenodd;"/>
+			<polygon points="472 245, 474.65 251, 469.35 251" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 0.4; fill: rgb(0%,0%,0%); fill-rule: evenodd;"/>
+			<text x="484" y="257" style="font-family: Arial; font-size: 10px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,514) scale(1,-1)">Có</text>
+			<polygon points="472 245, 570 214, 472 183, 374 214" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 1; fill: rgb(100%,100%,100%); fill-rule: evenodd;"/>
+			<text x="437.7919921875" y="218.09000000000003" style="font-family: Arial; font-size: 11.5px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,436) scale(1,-1)">Cú pháp lệnh</text>
+			<text x="452.5628662109375" y="202.09000000000003" style="font-family: Arial; font-size: 11.5px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,404) scale(1,-1)">hợp lệ?</text>
+			<polyline points="472 183, 472 152" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 1.15; fill: None; fill-rule: evenodd;"/>
+			<polygon points="472 152, 474.65 158, 469.35 158" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 0.4; fill: rgb(0%,0%,0%); fill-rule: evenodd;"/>
+			<text x="484" y="163" style="font-family: Arial; font-size: 10px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,326) scale(1,-1)">Có</text>
+			<rect x="362" y="92" width="220" height="60" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 1; fill: rgb(100%,100%,100%); fill-rule: evenodd;"/>
+			<text x="423.125" y="135.09000000000003" style="font-family: Arial; font-weight: bold; font-size: 11.5px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,270) scale(1,-1)">Chấp nhận bản rõ</text>
+			<text x="413.23095703125" y="118.09000000000003" style="font-family: Arial; font-size: 11.5px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,236) scale(1,-1)">Đưa lệnh vào hàng đợi</text>
+			<text x="423.09130859375" y="101.09000000000003" style="font-family: Arial; font-size: 11.5px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,202) scale(1,-1)">Xóa bộ đệm bản rõ</text>
+			<polyline points="472 92, 472 64" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 1.15; fill: None; fill-rule: evenodd;"/>
+			<polygon points="472 64, 474.65 70, 469.35 70" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 0.4; fill: rgb(0%,0%,0%); fill-rule: evenodd;"/>
+			<rect x="402" y="30" width="140" height="34" rx="17.0" ry="17.0" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 1; fill: rgb(100%,100%,100%); fill-rule: evenodd;"/>
+			<text x="450.903564453125" y="43.0" style="font-family: Arial; font-size: 11.5px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,86) scale(1,-1)">Kết thúc</text>
+			<polyline points="374 722, 315 722" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 1.15; fill: None; fill-rule: evenodd;"/>
+			<polygon points="315 722, 321 719.35, 321 724.65" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 0.4; fill: rgb(0%,0%,0%); fill-rule: evenodd;"/>
+			<text x="330.0419921875" y="730" style="font-family: Arial; font-size: 10px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,1460) scale(1,-1)">Không</text>
+			<polyline points="374 480, 315 480" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 1.15; fill: None; fill-rule: evenodd;"/>
+			<polygon points="315 480, 321 477.35, 321 482.65" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 0.4; fill: rgb(0%,0%,0%); fill-rule: evenodd;"/>
+			<text x="330.0419921875" y="488" style="font-family: Arial; font-size: 10px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,976) scale(1,-1)">Không</text>
+			<polyline points="374 311, 315 311" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 1.15; fill: None; fill-rule: evenodd;"/>
+			<polygon points="315 311, 321 308.35, 321 313.65" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 0.4; fill: rgb(0%,0%,0%); fill-rule: evenodd;"/>
+			<text x="330.0419921875" y="319" style="font-family: Arial; font-size: 10px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,638) scale(1,-1)">Không</text>
+			<polyline points="374 214, 315 214" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 1.15; fill: None; fill-rule: evenodd;"/>
+			<polygon points="315 214, 321 211.35, 321 216.65" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 0.4; fill: rgb(0%,0%,0%); fill-rule: evenodd;"/>
+			<text x="330.0419921875" y="222" style="font-family: Arial; font-size: 10px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,444) scale(1,-1)">Không</text>
+			<path d="M 315,722 L 315,88 Z" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 1.15;"/>
+			<polyline points="315 88, 301 88, 301 64" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 1.15; fill: None; fill-rule: evenodd;"/>
+			<polygon points="301 64, 303.65 70, 298.35 70" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 0.4; fill: rgb(0%,0%,0%); fill-rule: evenodd;"/>
+			<rect x="252" y="19" width="98" height="45" style="stroke: rgb(0%,0%,0%); stroke-linecap: butt; stroke-width: 1; fill: rgb(100%,100%,100%); fill-rule: evenodd;"/>
+			<text x="272.9541259765625" y="45.99800000000005" style="font-family: Arial; font-weight: bold; font-size: 10.3px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,91) scale(1,-1)">Từ chối gói</text>
+			<text x="267.489794921875" y="29.998000000000047" style="font-family: Arial; font-size: 10.3px;fill: rgb(0%,0%,0%); stroke:none;" transform="translate(0,59) scale(1,-1)">Không thực thi</text>
+		</g>
+	</g>
+</svg>
