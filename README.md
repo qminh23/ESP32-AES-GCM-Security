@@ -59,7 +59,7 @@ flowchart LR
 
 Python mã hóa payload. ESP32 xác thực tag, timestamp và cấu trúc lệnh, sau đó đưa vào hàng đợi, đặt GPIO và gửi ACK kèm mã lệnh/số đo. Dashboard xác nhận thực thi khi ACK khớp lệnh chờ.
 
-TLS bảo vệ kết nối client–broker; AES-GCM bảo vệ payload điều khiển Python–ESP32. **TLS vẫn bật khi tắt AES**. Status/telemetry dùng JSON qua TLS, chưa có AES-GCM ở tầng ứng dụng.
+TLS bảo vệ kết nối client–broker; AES-GCM bảo vệ payload điều khiển Python–ESP32. **TLS vẫn bật khi tắt AES**. Status/telemetry dùng JSON qua TLS.
 
 ## Phần cứng và đấu nối
 
