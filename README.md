@@ -65,7 +65,7 @@ TLS bảo vệ kết nối client–broker; AES-GCM bảo vệ payload điều k
 
 | Thành phần | Vai trò / cấu hình |
 | --- | --- |
-| ESP32 Xtensa | Firmware, Wi-Fi, MQTT/TLS, AES-GCM |
+| ESP32 | Firmware, Wi-Fi, MQTT/TLS, AES-GCM |
 | Relay tương thích ESP32 | Điều khiển khóa qua GPIO18 |
 | Solenoid 12 V và nguồn | Tải đóng/mở qua tiếp điểm relay |
 | INA219 | Đo nguồn bo, I2C `0x40`, shunt `0,1 Ω` (R100) |
@@ -78,12 +78,6 @@ TLS bảo vệ kết nối client–broker; AES-GCM bảo vệ payload điều k
 | INA219 SDA / SCL | GPIO25 / GPIO26 |
 | INA219 VCC / GND | 3V3 / GND chung ESP32 |
 | Nhánh đo dòng | Nguồn 5 V → VIN+ INA219 → VIN− → đầu 5 V bo |
-
-Nguồn solenoid 12 V đi qua tiếp điểm relay, không cấp vào GPIO/3V3. Khi đo năng lượng bo, đặt relay/solenoid ngoài nhánh đo và tránh USB cấp điện vòng qua INA219, kể cả khi dùng UART.
-
-Ghi rõ các tải thực tế dùng chung nguồn khi báo cáo kết quả.
-
-Nếu thay relay hoặc đấu COM–NO/COM–NC khác, kiểm tra `DOOR_UNLOCK_LEVEL` và `DOOR_LOCK_LEVEL` trong `main/hardware_control.h`. ACK xác nhận GPIO, chưa xác nhận vị trí chốt.
 
 ## Cấu trúc thư mục
 
@@ -109,7 +103,6 @@ Nếu thay relay hoặc đấu COM–NO/COM–NC khác, kiểm tra `DOOR_UNLOCK_
 │   ├── emqxsl-ca.crt             # CA công khai cho TLS
 │   └── *.local.h.example         # Mẫu Wi-Fi/MQTT
 ├── tests/                        # Mã kiểm thử Python mô phỏng
-├── docs/                         # Hướng dẫn tổ chức phép đo năng lượng
 └── .devcontainer/                # Môi trường ESP-IDF tham khảo
 ```
 
